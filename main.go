@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/joshckidd/gator/internal/config"
 )
@@ -12,16 +13,30 @@ func main() {
 		fmt.Println(err)
 	}
 
-	c.CurrentUserName = "josh"
-	err = c.SetUser()
-	if err != nil {
-		fmt.Println(err)
+	var s state
+	s.config = &c
+
+	cliCommands := commands{
+		commandMap: map[string]func(*state, command) error{},
 	}
 
-	c, err = config.Read()
+	cliCommands.register("login", handlerLogin)
+
+	args := os.Args
+
+	if len(args) < 2 {
+		fmt.Println("No arguments provided.")
+		os.Exit(1)
+	}
+
+	cmd := command{
+		name: args[1],
+		args: args[2:],
+	}
+
+	err = cliCommands.run(&s, cmd)
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(c)
+		os.Exit(1)
 	}
 }
