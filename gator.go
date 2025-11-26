@@ -80,6 +80,23 @@ func handlerReset(s *state, cmd command) error {
 	return nil
 }
 
+func handlerUsers(s *state, cmd command) error {
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for u := range users {
+		if users[u] == s.cfg.CurrentUserName {
+			fmt.Printf("* %s (current)\n", users[u])
+		} else {
+			fmt.Printf("* %s\n", users[u])
+		}
+	}
+
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	commandFunction, ok := c.commandMap[cmd.name]
 	if !ok {
