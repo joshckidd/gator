@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joshckidd/gator/internal/config"
+	"github.com/joshckidd/gator/internal/database"
 )
 
 type state struct {
-	config *config.Config
+	db  *database.Queries
+	cfg *config.Config
 }
 
 type command struct {
@@ -25,13 +30,44 @@ func handlerLogin(s *state, cmd command) error {
 		return errors.New("No arguments given for login command.")
 	}
 
-	s.config.CurrentUserName = cmd.args[0]
-	err := s.config.SetUser()
+	_, err := s.db.GetUser(context.Background(), cmd.args[0])
+	if err != nil {
+		return err
+	}
+
+	s.cfg.CurrentUserName = cmd.args[0]
+	err = s.cfg.SetUser()
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("User set to %s\n", cmd.args[0])
+	return nil
+}
+
+func handlerRegister(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return errors.New("No arguments given for register command.")
+	}
+
+	_, err := s.db.CreateUser(context.Background(), database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.args[0],
+	})
+	if err != nil {
+		return err
+	}
+
+	s.cfg.CurrentUserName = cmd.args[0]
+	err = s.cfg.SetUser()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("User %s created.\n", cmd.args[0])
+
 	return nil
 }
 
