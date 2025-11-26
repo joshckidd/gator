@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joshckidd/gator/internal/config"
 	"github.com/joshckidd/gator/internal/database"
+	"github.com/joshckidd/gator/internal/rss"
 )
 
 type state struct {
@@ -93,6 +94,21 @@ func handlerUsers(s *state, cmd command) error {
 			fmt.Printf("* %s\n", users[u])
 		}
 	}
+
+	return nil
+}
+
+func handlerAgg(s *state, cmd command) error {
+	/*if len(cmd.args) == 0 {
+		return errors.New("No arguments given for agg command.")
+	}*/
+
+	feed, err := rss.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(feed)
 
 	return nil
 }
