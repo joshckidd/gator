@@ -140,6 +140,19 @@ func handlerAddFeed(s *state, cmd command) error {
 	return nil
 }
 
+func handlerFeeds(s *state, cmd command) error {
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for u := range feeds {
+		fmt.Printf("* Name: %s\n  URL: %s\n  User: %s\n", feeds[u].Name, feeds[u].Url, feeds[u].Name_2)
+	}
+
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	commandFunction, ok := c.commandMap[cmd.name]
 	if !ok {
