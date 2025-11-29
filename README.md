@@ -13,7 +13,7 @@ Using this tool requires:
 
 1. Start a postgresql server that is accessible from the machine where you will be running this tool.
 2. Check out the code for this repository.
-3. Run `go install` in the root of the repository.
+3. Run `go build` and then `go install` in the root of the repository.
 4. Create a file called `.gatorconfig.json` in your home directory. The file should contain the following two values:
     * db_url - The url for the postgres database to use.
     * current_user_name - Does not need to have a value to start.
