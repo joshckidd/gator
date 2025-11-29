@@ -198,6 +198,27 @@ func handlerFollowing(s *state, cmd command, currentUser database.User) error {
 	return nil
 }
 
+func handlerUnfollow(s *state, cmd command, currentUser database.User) error {
+	if len(cmd.args) == 0 {
+		return errors.New("No arguments given for unfollow command.")
+	}
+
+	feed, err := s.db.GetFeedByUrl(context.Background(), cmd.args[0])
+	if err != nil {
+		return err
+	}
+
+	err = s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		UserID: currentUser.ID,
+		FeedID: feed,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	commandFunction, ok := c.commandMap[cmd.name]
 	if !ok {

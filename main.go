@@ -42,6 +42,7 @@ func main() {
 	cliCommands.register("feeds", handlerFeeds)
 	cliCommands.register("follow", middlewareLoggedIn(handlerFollow))
 	cliCommands.register("following", middlewareLoggedIn(handlerFollowing))
+	cliCommands.register("unfollow", middlewareLoggedIn(handlerUnfollow))
 
 	args := os.Args
 
