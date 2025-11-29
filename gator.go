@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -112,7 +113,10 @@ func handlerAgg(s *state, cmd command) error {
 
 	ticker := time.NewTicker(time_between_reqs)
 	for ; ; <-ticker.C {
-		scrapeFeeds(s)
+		err := scrapeFeeds(s)
+		if err != nil {
+			return err
+		}
 	}
 }
 
@@ -222,6 +226,31 @@ func handlerUnfollow(s *state, cmd command, currentUser database.User) error {
 	return nil
 }
 
+func handlerBrowse(s *state, cmd command, currentUser database.User) error {
+	limit := 2
+	if len(cmd.args) != 0 {
+		var err error
+		limit, err = strconv.Atoi(cmd.args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{
+		UserID: currentUser.ID,
+		Limit:  int32(limit),
+	})
+	if err != nil {
+		return err
+	}
+
+	for u := range posts {
+		fmt.Printf("* Title: %s\n  Description: %s\n  Link: %s\n", posts[u].Title, posts[u].Description, posts[u].Url)
+	}
+
+	return nil
+}
+
 func (c *commands) run(s *state, cmd command) error {
 	commandFunction, ok := c.commandMap[cmd.name]
 	if !ok {
@@ -268,7 +297,24 @@ func scrapeFeeds(s *state) error {
 	}
 
 	for i := range feed.Channel.Item {
-		fmt.Printf("* %s\n", feed.Channel.Item[i].Title)
+		publishedDate, err := time.Parse("Mon, 02 Jan 2006 15:04:05 Z0700", feed.Channel.Item[i].PubDate)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       feed.Channel.Item[i].Title,
+			Url:         feed.Channel.Item[i].Link,
+			Description: feed.Channel.Item[i].Description,
+			PublishedAt: publishedDate,
+			FeedID:      nextFeed.ID,
+		})
+		if err != nil && err.Error() != "pq: duplicate key value violates unique constraint \"posts_url_key\"" {
+			return err
+		}
 	}
 
 	return nil
